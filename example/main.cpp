@@ -404,29 +404,43 @@ private:
 
    }
 };
+template <typename T, std::size_t N>
+struct SArray
+{
+   T data[N];
+   const size_t size() const { return N; }
 
+   const T operator [] (size_t index) const { return data[index]; }
+   operator T* () {
+      T* p = new T[N];
+      memcpy(p, data, sizeof(data));
+      return p;
+   }
+};
+
+template <typename T, typename ... U> SArray(T, U...)->SArray<T, 1 + sizeof...(U)>;
 struct MySequence : public ImSequencer::SequenceInterface
 {
    // interface with sequencer
 
-   virtual int GetFrameMin() const {
+   virtual int GetFrameMin() const override {
       return mFrameMin;
    }
-   virtual int GetFrameMax() const {
+   virtual int GetFrameMax() const override {
       return mFrameMax;
    }
-   virtual int GetItemCount() const { return (int)myItems.size(); }
+   virtual int GetItemCount() const override { return (int)myItems.size(); }
 
-   virtual int GetItemTypeCount() const { return sizeof(SequencerItemTypeNames) / sizeof(char*); }
-   virtual const char* GetItemTypeName(int typeIndex) const { return SequencerItemTypeNames[typeIndex]; }
-   virtual const char* GetItemLabel(int index) const
+   virtual int GetItemTypeCount() const override { return sizeof(SequencerItemTypeNames) / sizeof(char*); }
+   virtual const char* GetItemTypeName(int typeIndex) const override { return SequencerItemTypeNames[typeIndex]; }
+   virtual const char* GetItemLabel(int index) const override
    {
       static char tmps[512];
       snprintf(tmps, 512, "[%02d] %s", index, SequencerItemTypeNames[myItems[index].mType]);
       return tmps;
    }
 
-   virtual void Get(int index, int** start, int** end, int* type, unsigned int* color)
+   virtual void Get(int index, int** start, int** end, int* type, unsigned int* color) override
    {
       MySequenceItem& item = myItems[index];
       if (color)
@@ -438,11 +452,11 @@ struct MySequence : public ImSequencer::SequenceInterface
       if (type)
          *type = item.mType;
    }
-   virtual void Add(int type) { myItems.push_back(MySequenceItem{ type, 0, 10, false }); };
-   virtual void Del(int index) { myItems.erase(myItems.begin() + index); }
-   virtual void Duplicate(int index) { myItems.push_back(myItems[index]); }
+   virtual void Add(int type)  override { myItems.push_back(MySequenceItem{ type, 0, 10, false }); };
+   virtual void Del(int index) override { myItems.erase(myItems.begin() + index); }
+   virtual void Duplicate(int index)  override { myItems.push_back(myItems[index]); }
 
-   virtual size_t GetCustomHeight(int index) { return myItems[index].mExpanded ? 300 : 0; }
+   virtual size_t GetCustomHeight(int index) override { return myItems[index].mExpanded ? 300 : 0; }
 
    // my datas
    MySequence() : mFrameMin(0), mFrameMax(0) {}
@@ -456,7 +470,7 @@ struct MySequence : public ImSequencer::SequenceInterface
    std::vector<MySequenceItem> myItems;
    RampEdit rampEdit;
 
-   virtual void DoubleClick(int index) {
+   virtual void DoubleClick(int index) override {
       if (myItems[index].mExpanded)
       {
          myItems[index].mExpanded = false;
@@ -467,7 +481,7 @@ struct MySequence : public ImSequencer::SequenceInterface
       myItems[index].mExpanded = !myItems[index].mExpanded;
    }
 
-   virtual void CustomDraw(int index, ImDrawList* draw_list, const ImRect& rc, const ImRect& legendRect, const ImRect& clippingRect, const ImRect& legendClippingRect)
+   virtual void CustomDraw(int index, ImDrawList* draw_list, const ImRect& rc, const ImRect& legendRect, const ImRect& clippingRect, const ImRect& legendClippingRect) override
    {
       static const char* labels[] = { "Translation", "Rotation" , "Scale" };
 
@@ -488,7 +502,7 @@ struct MySequence : public ImSequencer::SequenceInterface
       ImCurveEdit::Edit(rampEdit, rc.Max - rc.Min, 137 + index, &clippingRect);
    }
 
-   virtual void CustomDrawCompact(int index, ImDrawList* draw_list, const ImRect& rc, const ImRect& clippingRect)
+   virtual void CustomDrawCompact(int index, ImDrawList* draw_list, const ImRect& rc, const ImRect& clippingRect) override
    {
       rampEdit.mMax = ImVec2(float(mFrameMax), 1.f);
       rampEdit.mMin = ImVec2(float(mFrameMin), 0.f);
@@ -861,7 +875,7 @@ int main(int, char**)
          ImGui::SameLine();
          ImGui::InputInt("Frame Max", &mySequence.mFrameMax);
          ImGui::PopItemWidth();
-         Sequencer(&mySequence, &currentFrame, &expanded, &selectedEntry, &firstFrame, ImSequencer::SEQUENCER_EDIT_STARTEND | ImSequencer::SEQUENCER_ADD | ImSequencer::SEQUENCER_DEL | ImSequencer::SEQUENCER_COPYPASTE | ImSequencer::SEQUENCER_CHANGE_FRAME);
+         Sequencer(mySequence, &currentFrame, &expanded, &selectedEntry, &firstFrame, ImSequencer::SEQUENCER_EDIT_STARTEND | ImSequencer::SEQUENCER_ADD | ImSequencer::SEQUENCER_DEL | ImSequencer::SEQUENCER_COPYPASTE | ImSequencer::SEQUENCER_CHANGE_FRAME);
          // add a UI to edit that particular item
          if (selectedEntry != -1)
          {

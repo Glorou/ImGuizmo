@@ -49,7 +49,53 @@ namespace ImSequencer
          draw_list->AddLine(ImVec2(midx, delRect.Min.y + 3), ImVec2(midx, delRect.Max.y - 3), delColor, 2);
       return overDel;
    }
+   
+   struct SequenceInterfaceImpl : SequenceInterface
+   {
+      SequenceInterfaceVTable table;
 
+      SequenceInterfaceImpl(const SequenceInterfaceVTable& table) : table(table)
+      {
+      }
+
+      int GetFrameMin() const override { return table.GetFrameMin(table.userdata); }
+      int GetFrameMax() const override { return table.GetFrameMax(table.userdata); }
+      int GetItemCount() const override { return table.GetItemCount(table.userdata); }
+      void BeginEdit(int index) override { table.BeginEdit(index, table.userdata); }
+      void EndEdit() override { table.EndEdit(table.userdata); }
+      int GetItemTypeCount() const override { if (table.GetItemTypeCount) return table.GetItemTypeCount(table.userdata); else return 0; }
+      const char* GetItemTypeName(int typeIndex) const override { if (table.GetItemTypeName) return table.GetItemTypeName(typeIndex, table.userdata); else return ""; }
+      const char* GetItemLabel(int index) const override { if (table.GetItemLabel) return table.GetItemLabel(index, table.userdata); else return ""; }
+      const char* GetCollapseFmt() const override { if (table.GetCollapseFmt) return table.GetCollapseFmt(table.userdata); else return "%d Frames / %d entries"; }
+
+      void Get(int index, int** start, int** end, int* type, unsigned int* color) override { return table.Get(index, start, end, type, color, table.userdata); }
+      void Add(int type) override { if (table.Add) table.Add(type, table.userdata); }
+      void Del(int index) override { if (table.Del) table.Del(index, table.userdata); }
+      void Duplicate(int index) override { if (table.Duplicate) table.Duplicate(index, table.userdata); }
+
+      void Copy() override { if (table.Copy) table.Copy(table.userdata); }
+      void Paste() override { if (table.Paste) table.Paste(table.userdata); }
+
+      size_t GetCustomHeight(int index) override { if (table.GetCustomHeight) return table.GetCustomHeight(index, table.userdata); else return 0; }
+      void DoubleClick(int index) override { if (table.DoubleClick) table.DoubleClick(index, table.userdata); }
+      void CustomDraw(int index, ImDrawList* draw_list, const ImRect& rc, const ImRect& legendRect, const ImRect& clippingRect, const ImRect& legendClippingRect) override 
+      { if (table.CustomDraw) table.CustomDraw(index, draw_list, &rc, &legendRect, &clippingRect, &legendClippingRect, table.userdata); }
+      void CustomDrawCompact(int index, ImDrawList* draw_list, const ImRect& rc, const ImRect& clippingRect) override 
+      { if (table.CustomDrawCompact) table.CustomDrawCompact(index, draw_list, &rc, &clippingRect, table.userdata); }
+   };
+	SequenceInterface* CreateSequencerInterface(const SequenceInterfaceVTable& table)
+	{
+	   return new SequenceInterfaceImpl(table);
+	}
+
+   // C-Compatible (side note, don't forget to move the cpp stuff down in the cpp file and set appropriate dll export attributes)
+	void DestroySequenceInterface(SequenceInterface* ptr)
+	{
+		auto* self = static_cast<SequenceInterfaceImpl*>(ptr);
+	delete self;
+	}
+
+   
    bool Sequencer(SequenceInterface* sequence, int* currentFrame, bool* expanded, int* selectedEntry, int* firstFrame, int sequenceOptions)
    {
       bool ret = false;

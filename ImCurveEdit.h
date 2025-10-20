@@ -61,8 +61,8 @@ namespace ImCurveEdit
    {
       bool focused = false;
       virtual size_t GetCurveCount() = 0;
-      virtual bool IsVisible(size_t /*curveIndex*/) { return true; }
-      virtual CurveType GetCurveType(size_t /*curveIndex*/) const { return CurveLinear; }
+      virtual bool IsVisible(size_t curveIndex) { return true; }
+      virtual CurveType GetCurveType(size_t curveIndex) const { return CurveLinear; }
       virtual ImVec2& GetMin() = 0;
       virtual ImVec2& GetMax() = 0;
       virtual size_t GetPointCount(size_t curveIndex) = 0;
@@ -72,7 +72,7 @@ namespace ImCurveEdit
       virtual void AddPoint(size_t curveIndex, ImVec2 value) = 0;
       virtual unsigned int GetBackgroundColor() { return 0xFF202020; }
       // handle undo/redo thru this functions
-      virtual void BeginEdit(int /*index*/) {}
+      virtual void BeginEdit(int index) {}
       virtual void EndEdit() {}
    };
 

@@ -25,7 +25,6 @@
 //
 #pragma once
 
-#include <cstddef>
 
 struct ImDrawList;
 struct ImRect;
@@ -68,9 +67,41 @@ namespace ImSequencer
       virtual void DoubleClick(int /*index*/) {}
       virtual void CustomDraw(int /*index*/, ImDrawList* /*draw_list*/, const ImRect& /*rc*/, const ImRect& /*legendRect*/, const ImRect& /*clippingRect*/, const ImRect& /*legendClippingRect*/) {}
       virtual void CustomDrawCompact(int /*index*/, ImDrawList* /*draw_list*/, const ImRect& /*rc*/, const ImRect& /*clippingRect*/) {}
+
+       virtual ~SequenceInterface() = default;
+   };
+
+   // C-Compatible virtual table
+   struct SequenceInterfaceVTable
+   {
+      int(*GetFrameMin) (void* userdata);
+      int(*GetFrameMax) (void* userdata);
+      int(*GetItemCount) (void* userdata);
+      void(*BeginEdit) (int index, void* userdata);
+      void(*EndEdit) (void* userdata);
+      int(*GetItemTypeCount)(void* userdata);
+      const char* (*GetItemTypeName)(int typeIndex, void* userdata);
+      const char* (*GetItemLabel)(int index, void* userdata);
+      const char* (*GetCollapseFmt)(void* userdata);
+
+      void (*Get)(int index, int** start, int** end, int* type, unsigned int* color, void* userdata);
+      void (*Add)(int type, void* userdata);
+      void (*Del)(int index, void* userdata);
+      void (*Duplicate)(int index, void* userdata);
+
+      void (*Copy)(void* userdata);
+      void (*Paste)(void* userdata);
+
+      size_t (*GetCustomHeight)(int index, void* userdata);
+      void (*DoubleClick)(int index, void* userdata);
+      void (*CustomDraw)(int index, ImDrawList* draw_list, const ImRect* rc, const ImRect* legendRect, const ImRect* clippingRect, const ImRect* legendClippingRect, void* userdata);
+      void (*CustomDrawCompact)(int index, ImDrawList* draw_list, const ImRect* rc, const ImRect* clippingRect, void* userdata);
+      void* userdata;
    };
 
 
+   SequenceInterface* CreateSequencerInterface(const SequenceInterfaceVTable& table);
+   void DestroySequenceInterface(SequenceInterface* ptr);
    // return true if selection is made
    bool Sequencer(SequenceInterface* sequence, int* currentFrame, bool* expanded, int* selectedEntry, int* firstFrame, int sequenceOptions);
 
