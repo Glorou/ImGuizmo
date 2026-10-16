@@ -233,7 +233,7 @@ namespace IMGUIZMO_NAMESPACE
 
    IMGUI_API void SetAlternativeWindow(ImGuiWindow* window);
 
-   [[deprecated("Use PushID/PopID instead.")]]
+
    IMGUI_API void SetID(int id);
 
 	// ID stack/scopes
